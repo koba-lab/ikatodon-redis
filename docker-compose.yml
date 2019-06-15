@@ -1,0 +1,32 @@
+version: '3'
+services:
+  redis:
+    restart: always
+    image: redis:5.0-alpine
+    networks:
+      - internal_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - ./redis:/data
+      - ./conf/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+  
+  nginx:
+    restart: always
+    image: nginx:1.17-alpine
+    networks:
+      - external_network
+      - internal_network
+    ports:
+      - 6379:6379
+    volumes:
+      - ./conf/nginx/conf.d/redis.conf:/etc/nginx/stream/redis.conf:ro
+      - ./conf/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - redis
+
+networks:
+  external_network:
+  internal_network:
+    internal: true
